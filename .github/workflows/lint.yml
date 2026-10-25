@@ -1,0 +1,52 @@
+name: Python Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    - name: Check code formatting with Black
+      run: |
+        echo "=== Checking code formatting with Black ==="
+        black --check --verbose --diff --color altissia_bot/ run.py || {
+          echo ""
+          echo "❌ Black formatting issues found!"
+          echo "💡 To fix, run locally: black altissia_bot/ run.py"
+          echo ""
+          echo "=== Files that need formatting ==="
+          black --check altissia_bot/ run.py 2>&1 | grep "would reformat"
+          echo ""
+          echo "=== Detailed diff ==="
+          black --diff --color altissia_bot/ run.py
+          exit 1
+        }
+
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 altissia_bot/ run.py --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 altissia_bot/ run.py --count --max-line-length=100 --statistics --exit-zero
+
+    - name: Type check with mypy
+      run: |
+        mypy altissia_bot/ run.py --ignore-missing-imports
+
