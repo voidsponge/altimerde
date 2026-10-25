@@ -42,3 +42,6 @@ altissia_bot.log
 
 # Profil navigateur du bot
 .browser-profile/
+.venv/
+.claude/
+*.bak
