@@ -6,7 +6,7 @@ Workflow automatique pour résoudre les exercices
 import os
 import time
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
-from .utils import load_config, print_header, print_success, print_error, print_info
+from .utils import load_config, print_header, print_success, print_error, print_info, ask
 from .automations import (
     login,
     detect_exercise_type,
@@ -95,7 +95,7 @@ def run_bot(headless=False):
 
             # Instructions utilisateur
             print_info("Naviguez vers l'exercice que vous voulez résoudre")
-            input("Appuyez sur Entrée une fois sur la page de l'exercice...")
+            ask(context, "Appuyez sur Entrée une fois sur la page de l'exercice...")
 
             # WORKFLOW PRINCIPAL EN BOUCLE
             while True:
@@ -142,12 +142,12 @@ def run_bot(headless=False):
                     )
 
                     # Demander si on continue
-                    choice = input("\nFaire un autre exercice? (o/n): ").lower()
+                    choice = ask(context, "\nFaire un autre exercice? (o/n): ").lower()
                     if choice != "o":
                         break
 
                     print_info("Naviguez vers le prochain exercice...")
-                    input("Appuyez sur Entrée quand prêt...")
+                    ask(context, "Appuyez sur Entrée quand prêt...")
                 else:
                     print_info("Pas de bouton 'Réessayer' - Fin de l'exercice")
                     break

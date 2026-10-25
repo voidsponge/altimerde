@@ -6,7 +6,7 @@ Vérifie les MOTS ENTIERS dans la blacklist (pas sous-chaînes)
 import time
 import re
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
-from .utils import wait_and_click, print_success, print_error, print_info, is_color_green
+from .utils import wait_and_click, print_success, print_error, print_info, is_color_green, ask
 from .constants import SELECTORS, BLACKLIST_WORDS
 
 
@@ -271,7 +271,7 @@ def collect_all_answers(page, exercise_type, max_questions=100):
                 correct_answers = find_any_correct_elements(page)
                 correct_answers = filter_blacklist(correct_answers)
                 if not correct_answers:
-                    manual = input("Entrez manuellement (ou skip): ").strip()
+                    manual = ask(page.context, "Entrez manuellement (ou skip): ").strip()
                     if manual.lower() == "skip":
                         break
                     elif manual:

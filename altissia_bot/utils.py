@@ -5,6 +5,8 @@ Utilitaires et helpers
 import os
 import logging
 import re
+import threading
+import time
 from dotenv import load_dotenv
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeout
 
@@ -39,6 +41,38 @@ def load_config():
         )
 
     return config
+
+
+def ask(context, prompt: str) -> str:
+    """
+    input() qui laisse Playwright tourner pendant l'attente.
+
+    Avec l'API sync, un input() bloquant empêche Playwright de lire les messages
+    du navigateur. Sous Windows le tampon se remplit vite et les nouveaux onglets
+    restent bloqués sur « Chargement en cours ». On lit donc le clavier dans un
+    thread et on fait tourner Playwright en attendant.
+    """
+    answer = {}
+    done = threading.Event()
+
+    def _read():
+        try:
+            answer["value"] = input(prompt)
+        except EOFError:
+            answer["value"] = ""
+        done.set()
+
+    threading.Thread(target=_read, daemon=True).start()
+    while not done.is_set():
+        open_pages = [pg for pg in context.pages if not pg.is_closed()]
+        try:
+            if open_pages:
+                open_pages[-1].wait_for_timeout(200)
+            else:
+                time.sleep(0.2)
+        except Exception:
+            time.sleep(0.2)
+    return answer["value"]
 
 
 def wait_and_click(page: Page, selector: str, timeout: int = 5000) -> bool:
