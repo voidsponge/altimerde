@@ -39,3 +39,6 @@ screenshots/
 *.swo
 *~
 altissia_bot.log
+
+# Profil navigateur du bot
+.browser-profile/

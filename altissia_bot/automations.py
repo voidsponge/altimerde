@@ -193,16 +193,53 @@ def is_valid_choice_element(elem):
         return False
 
 
+def click_validate(page, question_type):
+    """Clique Valider. S'il est désactivé (aucune option choisie), sélectionne une option d'abord."""
+    btn = page.locator(SELECTORS["validate_button"]).first
+    try:
+        btn.wait_for(state="visible", timeout=3000)
+    except PlaywrightTimeout:
+        print_info(f"  Aucun bouton Valider visible sur: {page.url}")
+        try:
+            labels = [b.inner_text().strip() for b in page.locator("button:visible").all()]
+            print_info(f"  Boutons visibles: {[t for t in labels if t][:20]}")
+        except Exception:
+            pass
+        return False
+    if not btn.is_enabled() and question_type == "text":
+        print_info("  Valider désactivé - saisie d'une réponse bidon pour révéler la correction")
+        for field in page.locator(f'{SELECTORS["input_field"]}:visible').all():
+            try:
+                field.fill("x", timeout=2000)
+            except Exception:
+                continue
+        time.sleep(0.5)
+    elif not btn.is_enabled() and question_type in ("choice", "truefalse"):
+        print_info("  Valider désactivé - sélection d'une option pour révéler la réponse")
+        for elem in page.locator('button:visible, [role="button"]:visible').all():
+            if is_valid_choice_element(elem):
+                try:
+                    elem.click(timeout=2000)
+                    time.sleep(0.5)
+                    break
+                except Exception:
+                    continue
+    try:
+        btn.click(timeout=3000)
+        return True
+    except PlaywrightTimeout:
+        print_info("  Bouton Valider toujours désactivé")
+        return False
+
+
 def collect_all_answers(page, exercise_type, max_questions=100):
     print_info("PHASE 1: Collecte des réponses")
     answers_db = []
     for q_num in range(1, max_questions + 1):
         try:
             try:
-                retry_visible = page.locator(
-                    'button:has-text("Réessayer"), button:has-text("Ressayer")'
-                ).count()
-                continuer_visible = page.locator('button:has-text("Continuer")').count()
+                retry_visible = page.locator(SELECTORS["retry_button"]).count()
+                continuer_visible = page.locator(SELECTORS["continue_button"]).count()
                 if retry_visible > 0 and continuer_visible == 0:
                     print_info("Bouton Réessayer détecté - Fin")
                     break
@@ -213,7 +250,7 @@ def collect_all_answers(page, exercise_type, max_questions=100):
                 print_info("Plus de questions")
                 break
             print_info(f"--- Question {q_num} ({question_type.upper()}) ---")
-            if not wait_and_click(page, SELECTORS["validate_button"], timeout=3000):
+            if not click_validate(page, question_type):
                 print_info("Plus de bouton Valider")
                 break
 
@@ -641,7 +678,7 @@ def fill_order_question(page, answers):
 
 def check_retry_button(page, click=False):
     try:
-        selectors = ['button:has-text("Réessayer")', 'button:has-text("Ressayer")']
+        selectors = [SELECTORS["retry_button"]]
         for selector in selectors:
             try:
                 retry_btn = page.locator(selector).first
@@ -653,7 +690,7 @@ def check_retry_button(page, click=False):
                     print_success("Retour au début")
 
                     # Check for "Start" button (Commencer) if we landed on the start page
-                    start_selectors = ['button:has-text("Commencer")', 'button:has-text("Start")']
+                    start_selectors = [SELECTORS["start_button"]]
                     for start_sel in start_selectors:
                         try:
                             start_btn = page.locator(start_sel).first

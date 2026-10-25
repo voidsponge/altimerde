@@ -3,6 +3,7 @@
 Bot Altissia - Version optimisée
 Workflow automatique pour résoudre les exercices
 """
+import os
 import time
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 from .utils import load_config, print_header, print_success, print_error, print_info
@@ -13,6 +14,34 @@ from .automations import (
     fill_all_answers,
     check_retry_button,
 )
+
+
+def pick_exercise_page(context, fallback):
+    """Retourne l'onglet de l'exercice (la navigation école → Altissia ouvre de nouveaux onglets)"""
+    # API sync : pendant input() Playwright ne traite aucun événement, donc les onglets
+    # ouverts entre-temps ne sont pas encore dans context.pages. Une attente courte
+    # laisse Playwright rattraper son retard (nouveaux onglets, URLs à jour).
+    for _ in range(5):
+        try:
+            fallback.wait_for_timeout(1000)
+        except Exception:
+            pass
+        pages = [pg for pg in context.pages if not pg.is_closed()]
+        altissia = [pg for pg in pages if "altissia" in (pg.url or "").lower()]
+        if altissia:
+            break
+    lessons = [pg for pg in altissia if "/lesson/" in pg.url or "/exercise" in pg.url]
+    candidates = lessons or altissia or pages or [fallback]
+    target = candidates[-1]
+    if not altissia:
+        print_error("Aucun onglet Altissia trouvé - onglets vus: " + ", ".join(pg.url for pg in pages))
+    target.bring_to_front()
+    try:
+        target.wait_for_load_state("domcontentloaded", timeout=10000)
+    except PlaywrightTimeout:
+        pass
+    print_info(f"Onglet utilisé ({len(pages)} ouverts): {target.url}")
+    return target
 
 
 def run_bot(headless=False):
@@ -26,27 +55,28 @@ def run_bot(headless=False):
     print_header("BOT ALTISSIA - WORKFLOW AUTOMATIQUE")
 
     with sync_playwright() as p:
-        # Configuration navigateur
-        browser = p.chromium.launch(
+        # Contexte persistant : c'est le contexte par défaut du navigateur, donc le bot
+        # voit TOUS les onglets (y compris ceux ouverts par l'école ou à la main).
+        # Avec browser.new_context(), ces onglets lui étaient invisibles.
+        context = p.chromium.launch_persistent_context(
+            os.path.abspath(".browser-profile"),
             headless=headless,
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-web-security",
             ],
-        )
-
-        context = browser.new_context(
             viewport={"width": 1280, "height": 720},
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             locale="fr-FR",
             timezone_id="Europe/Paris",
         )
+        browser = context
 
-        page = context.new_page()
-        page.add_init_script(
+        context.add_init_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
+        page = context.pages[0] if context.pages else context.new_page()
 
         try:
             # Connexion
@@ -69,6 +99,9 @@ def run_bot(headless=False):
 
             # WORKFLOW PRINCIPAL EN BOUCLE
             while True:
+                # L'exercice peut être dans un autre onglet que celui ouvert par le bot
+                page = pick_exercise_page(context, page)
+
                 # ÉTAPE 1: Détection du type d'exercice
                 exercise_type = detect_exercise_type(page)
 

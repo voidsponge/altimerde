@@ -49,7 +49,7 @@ def wait_and_click(page: Page, selector: str, timeout: int = 5000) -> bool:
     """
     try:
         page.wait_for_selector(selector, timeout=timeout, state="visible")
-        page.click(selector)
+        page.click(selector, timeout=timeout)
         return True
     except PlaywrightTimeout:
         return False

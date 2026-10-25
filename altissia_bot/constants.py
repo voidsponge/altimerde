@@ -2,12 +2,24 @@
 Constantes, sélecteurs et listes de mots pour le bot Altissia.
 """
 
+# Libellés FR + EN (l'interface Altissia peut être en anglais)
+VALIDATE_LABELS = ["Valider", "Vérifier", "Check", "Validate", "Submit", "Verify"]
+CONTINUE_LABELS = ["Continuer", "Suivant", "Continue", "Next"]
+RETRY_LABELS = ["Réessayer", "Ressayer", "Recommencer", "Try again", "Retry", "Restart"]
+START_LABELS = ["Commencer", "Start", "Begin"]
+
+
+def _buttons(labels):
+    return ", ".join(f'button:has-text("{label}")' for label in labels)
+
+
 SELECTORS = {
     "input_field": 'input.c-iJOJc, input[type="text"]',
-    "validate_button": 'button:has-text("Valider")',
+    "validate_button": _buttons(VALIDATE_LABELS),
     "correct_answer": "span.c-gUxMKR-bkfbUO-isCorrect-true",
-    "continue_button": 'button.c-jUtMbh, button.c-lfgsZH:has-text("Continuer")',
-    "retry_button": 'button:has-text("Réessayer"), button:has-text("Ressayer")',
+    "continue_button": "button.c-jUtMbh, " + _buttons(CONTINUE_LABELS),
+    "retry_button": _buttons(RETRY_LABELS),
+    "start_button": _buttons(START_LABELS),
 }
 
 BLACKLIST_WORDS = [
@@ -20,6 +32,12 @@ BLACKLIST_WORDS = [
     "Success",
     "Valider",
     "Continuer",
+    "Check",
+    "Submit",
+    "Continue",
+    "Hint",
+    "Try again",
+    "Retry",
     "Revenir",
     "Ressayer",
     "Réessayer",
