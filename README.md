@@ -11,6 +11,50 @@ Automation bot for Altissia language exercises using Python and Playwright.
 
 ---
 
+## 🇫🇷 Guide rapide Windows (sans WSL)
+
+### 1. Installer Python
+
+- Télécharge Python 3 depuis https://www.python.org/downloads/ (pas le Microsoft Store).
+- Pendant l'installation, **coche « Add python.exe to PATH »**.
+
+### 2. Récupérer le projet
+
+- Sans git : sur la page GitHub, **Code → Download ZIP**, puis dézippe
+  (par ex. dans `Documents\altimerde`).
+- Avec git : `git clone https://github.com/voidsponge/altimerde.git`
+
+### 3. Installer
+
+Double-clique sur **`install.bat`** (à la racine du dossier). Le script :
+crée le venv `.venv`, installe les dépendances et Chromium, puis ouvre `.env`
+dans le Bloc-notes.
+
+Si Windows affiche « Windows a protégé votre ordinateur » : *Informations
+complémentaires → Exécuter quand même*.
+
+### 4. Configurer `.env`
+
+Dans le Bloc-notes qui s'ouvre :
+
+```env
+ALTISSIA_USERNAME=ton_identifiant
+ALTISSIA_PASSWORD=ton_mot_de_passe
+ALTISSIA_URL=https://...   # URL de la page de connexion de ton école (ex. login KEDGE)
+```
+
+Enregistre et ferme.
+
+### 5. Lancer
+
+Double-clique sur **`run.bat`**, puis suis la section
+[Utilisation](#5-lancer-1) plus bas (connexion → exercice → Entrée dans la
+fenêtre noire).
+
+Pour mettre à jour : re-télécharge le ZIP (en gardant ton `.env`) ou `git pull`.
+
+---
+
 ## 🇫🇷 Guide rapide (installation de zéro, Linux / WSL)
 
 ### 1. Prérequis
