@@ -1,83 +1,56 @@
 #!/bin/bash
+# Installation du bot Altissia (Linux / WSL / macOS)
+# Usage : ./scripts/install.sh   (depuis la racine du projet)
 
-# Script d'installation rapide pour le bot Altissia
+set -e
+cd "$(dirname "$0")/.."
 
 echo "🤖 Installation du Bot Altissia"
 echo "================================"
-echo ""
 
-# Vérifier que Python est installé
 if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 n'est pas installé"
-    echo "   Installez Python 3 puis relancez ce script"
+    echo "❌ Python 3 n'est pas installé (sur Ubuntu/WSL : sudo apt install python3 python3-venv)"
     exit 1
 fi
+echo "✅ $(python3 --version)"
 
-echo "✅ Python 3 détecté"
-echo ""
-
-# Vérifier que pip est installé
-if ! command -v pip3 &> /dev/null && ! command -v pip &> /dev/null; then
-    echo "❌ pip n'est pas installé"
-    echo "   Installez pip puis relancez ce script"
-    exit 1
+# Environnement virtuel
+if [ ! -d .venv ]; then
+    echo "📦 Création du venv (.venv)..."
+    python3 -m venv .venv || {
+        echo "❌ Impossible de créer le venv (sur Ubuntu/WSL : sudo apt install python3-venv)"
+        exit 1
+    }
 fi
+# shellcheck disable=SC1091
+source .venv/bin/activate
+echo "✅ venv activé"
 
-echo "✅ pip détecté"
-echo ""
-
-# Installation des dépendances Python
+# Dépendances (mode éditable : les modifs du code sont prises en compte sans réinstaller)
 echo "📦 Installation des dépendances Python..."
-pip install .
+pip install --upgrade pip > /dev/null
+pip install -e .
+echo "✅ Dépendances installées"
 
-if [ $? -ne 0 ]; then
-    echo "❌ Erreur lors de l'installation des dépendances"
-    exit 1
-fi
-
-echo "✅ Dépendances Python installées"
-echo ""
-
-# Installation de Chromium pour Playwright
+# Navigateur Chromium pour Playwright
 echo "🌐 Installation de Chromium pour Playwright..."
 playwright install chromium
-
-if [ $? -ne 0 ]; then
-    echo "❌ Erreur lors de l'installation de Chromium"
-    exit 1
+if [ "$(uname)" = "Linux" ]; then
+    echo "🌐 Installation des bibliothèques système de Chromium (sudo peut être demandé)..."
+    playwright install-deps chromium || echo "⚠️  install-deps a échoué : lancez 'sudo .venv/bin/playwright install-deps chromium'"
 fi
-
 echo "✅ Chromium installé"
-echo ""
 
-# Création du fichier .env s'il n'existe pas
+# Fichier de configuration
 if [ ! -f .env ]; then
-    echo "📝 Création du fichier .env..."
     cp .env.example .env
-    echo "✅ Fichier .env créé"
-    echo ""
-    echo "⚠️  IMPORTANT : Éditez le fichier .env et ajoutez vos identifiants Altissia"
-    echo "   Ouvrez .env et remplacez :"
-    echo "   - ALTISSIA_USERNAME=votre_email@example.com"
-    echo "   - ALTISSIA_PASSWORD=votre_mot_de_passe"
+    echo "📝 Fichier .env créé : éditez-le avec vos identifiants et l'URL de connexion de votre école"
 else
     echo "ℹ️  Fichier .env existant (non modifié)"
 fi
 
 echo ""
-
-# Rendre main.py exécutable
-chmod +x main.py
-echo "✅ main.py rendu exécutable"
-echo ""
-
-echo "================================"
 echo "🎉 Installation terminée !"
-echo "================================"
-echo ""
-echo "Prochaines étapes :"
-echo "1. Éditez le fichier .env avec vos identifiants"
-echo "2. Lancez le bot avec : python main.py"
-echo ""
-echo "Pour plus d'aide : consultez QUICKSTART.md ou README.md"
-echo ""
+echo "Pour lancer le bot :"
+echo "  source .venv/bin/activate"
+echo "  python run.py"

@@ -9,6 +9,97 @@ Automation bot for Altissia language exercises using Python and Playwright.
 
 > ⚠️ **Educational purposes only** - Use responsibly and in accordance with Altissia's terms of service.
 
+---
+
+## 🇫🇷 Guide rapide (installation de zéro, Linux / WSL)
+
+### 1. Prérequis
+
+- Python 3.9+ avec `venv` et `git` :
+  ```bash
+  sudo apt update && sudo apt install -y python3 python3-venv python3-pip git
+  ```
+- Sur Windows, utiliser WSL2 (Ubuntu). La fenêtre Chromium s'affiche via WSLg (Windows 11).
+
+### 2. Récupérer le projet
+
+```bash
+git clone https://github.com/voidsponge/altimerde.git
+cd altimerde
+```
+
+### 3. Installer (venv + dépendances + Chromium + .env)
+
+```bash
+chmod +x scripts/install.sh
+./scripts/install.sh
+```
+
+Le script crée `.venv`, installe le projet en mode éditable (`pip install -e .`),
+télécharge Chromium pour Playwright (et ses bibliothèques système sous Linux),
+puis crée `.env` à partir de `.env.example`.
+
+<details>
+<summary>Installation manuelle (équivalent du script)</summary>
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+playwright install chromium
+sudo .venv/bin/playwright install-deps chromium   # Linux/WSL uniquement
+cp .env.example .env
+```
+</details>
+
+### 4. Configurer `.env`
+
+```env
+ALTISSIA_USERNAME=ton_identifiant
+ALTISSIA_PASSWORD=ton_mot_de_passe
+ALTISSIA_URL=https://...   # URL de la page de connexion de ton école (ex. login KEDGE)
+```
+
+`.env` n'est jamais envoyé sur git (il est dans `.gitignore`).
+
+### 5. Lancer
+
+```bash
+source .venv/bin/activate   # à chaque nouveau terminal
+python run.py
+```
+
+1. Le bot ouvre Chromium sur la page de connexion. Connecte-toi si besoin
+   (la session est gardée dans `.browser-profile/`).
+2. Navigue jusqu'à l'exercice (ex. KEDGE : Courses → Business English →
+   *CLICK HERE to access your Altissia account* → leçon → exercice).
+   Les nouveaux onglets ne posent pas de problème : le bot choisit tout seul
+   l'onglet `learn.altissia.org/.../lesson/...`.
+3. Une fois sur la **première question**, appuie sur **Entrée** dans le terminal.
+4. Le bot valide chaque question pour récupérer la bonne réponse, clique sur
+   *Try again / Réessayer*, puis remplit tout l'exercice.
+
+Interface Altissia en français ou en anglais : les deux sont gérées.
+
+### Mettre à jour
+
+```bash
+git pull
+```
+
+Pas besoin de réinstaller (installation éditable), sauf si `pyproject.toml` change :
+`pip install -e .`
+
+### Dépannage
+
+- `Onglet utilisé (1 ouverts)` ou mauvais onglet : attends que la page de
+  l'exercice soit chargée avant d'appuyer sur Entrée.
+- `Aucun bouton Valider visible` : le log affiche `Boutons visibles: [...]` ;
+  ajoute le libellé manquant dans `VALIDATE_LABELS` (`altissia_bot/constants.py`).
+- `ModuleNotFoundError: playwright` : le venv n'est pas activé
+  (`source .venv/bin/activate`).
+- Chromium ne se lance pas sous WSL : `sudo .venv/bin/playwright install-deps chromium`.
+
 ## ✨ Features
 
 - 🔐 **Automatic login** with anti-bot detection bypass
